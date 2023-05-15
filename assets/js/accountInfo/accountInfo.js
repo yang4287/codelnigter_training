@@ -14,14 +14,14 @@
  */
 
 // IIFE 立即執行函式
-(function (window, document, $, undefined) {
+(function(window, document, $, undefined) {
   // 使用嚴格模式
   'use strict';
 
   // DOM下載完後執行
-  $(document).ready(function () {
+  $(document).ready(function() {
     // init this page
-    window.Page = window.Page || new function () { }();
+    window.Page = window.Page || new function() {}();
     window.Page[name] = obj();
   });
 
@@ -37,7 +37,7 @@
       */
 
   // Define a local copy of Object
-  var obj = function (options) {
+  var obj = function(options) {
     return new obj.fn.init(options);
   };
 
@@ -58,7 +58,7 @@
   /**
       * Javascript物件
       */
-  obj.fn.init = function (options) {
+  obj.fn.init = function(options) {
     /**
           * *************** Object Argument Setting ***************
           */
@@ -78,7 +78,7 @@
     /**
           * 建構子
           */
-    var _construct = function () {
+    var _construct = function() {
       console.log('_construct');
 
       _initialize();
@@ -87,21 +87,21 @@
     /**
           * 解構子
           */
-    var _destruct = function () { };
+    var _destruct = function() {};
 
     /**
           * 初始化
           */
-    var _initialize = function () {
+    var _initialize = function() {
       /**
               * 讀取全部
               */
-      $(".ctrl-table").empty();
+      $('.ctrl-table').empty();
       $.ajax({
         method: 'GET',
         url: self._ajaxUrls.accountApi,
         dataType: 'json',
-      }).done(function (data) {
+      }).done(function(data) {
         console.log(data);
         /**
        * 陣列資料配合$.each建立表格
@@ -118,7 +118,7 @@
         // 建立標題
         tr = $('<tr class="bg-info"></tr>').appendTo(thead);
         th = $('<th></th>').appendTo(tr);
-        $.each(data.data[0], function (key, value) {
+        $.each(data.data[0], function(key, value) {
           if (key != 'id') {
             th = $('<th>' + key + '</th>').appendTo(tr);
           }
@@ -126,10 +126,10 @@
         th = $('<th></th>').appendTo(tr);
 
         // 建立內容
-        $.each(data.data, function (index1, value1) {
+        $.each(data.data, function(index1, value1) {
           tr = $('<tr></tr>').appendTo(tbody);
-          td = $('<td> <input type="checkbox" aria-label="..."></td>').appendTo(tr);
-          $.each(value1, function (key, value2) {
+          td = $('<td> <input value="'+value1.id+'" name="id[]" type="checkbox" aria-label="..."></td>').appendTo(tr);
+          $.each(value1, function(key, value2) {
             if (key != 'id') {
               if (key == 'gender' && value2 == 0) {
                 value2 = '男';
@@ -147,14 +147,13 @@
               }
               td = $('<td>' + value2 + '</td>').appendTo(tr);
             }
-
           });
           td = $(
             '<td><button   data-toggle="modal" data-target="#myModal"  type="button"  class="btn btn-default btn-sm edit-btn float-left" data-id="' +
-            value1.id +
-            '" "><i  class="fas fa-pen color_green " ></i></button><button type="button" class="btn btn-default btn-sm delete-btn float-left" data-id="' +
-            value1.id +
-            '"><i class="fas fa-trash text-danger" ></i></button></td>'
+              value1.id +
+              '" "><i  class="fas fa-pen color_green " ></i></button><button type="button" class="btn btn-default btn-sm delete-btn float-left" data-id="' +
+              value1.id +
+              '"><i class="fas fa-trash text-danger" ></i></button></td>'
           ).appendTo(tr);
         });
         console.log('table done');
@@ -235,72 +234,110 @@
     /**
           * 事件綁定
           */
-    var _evenBind = function () {
+    var _evenBind = function() {
       console.log('_evenBind');
+      
+      $('.delete-batch-btn').on('click', function() {
+        console.log($(this).data('id'));
+      
+        var idArray = $("[name='id[]']").serializeArray();
+        console.log('傳送修改');
+        console.log(idArray);
+        BootstrapDialog.closeAll();
+
+        BootstrapDialog.show({
+          message: '確定刪除?' + $("[name='id[]']").val(),
+          type: 'type-danger',
+          buttons: [
+            {
+              label: '確定',
+              cssClass: 'btn-danger',
+              action: function(dialogRef) {
+                dialogRef.close();
+                $.ajax({
+                  method: 'DELETE',
+                  // 刪除id為2的資料
+                  url: self._ajaxUrls.accountApi,
+                  dataType: 'json',
+                  data:idArray,
+                })
+                  .done(function(data) {
+                    
+                    $.rustaMsgBox({ 'mode' : 'success' ,'content':'刪除成功!'});
+                 
+  
+                    _initialize();
+                  })
+                  .fail(function(jqXHR) {
+                    // 錯誤處理
+                   
+                    $.rustaMsgBox({ 'mode' : 'warning','content':'刪除失敗!'+jqXHR.responseTex });
+                  
+                    console.log(jqXHR);
+                  });
+              },
+            },
+            {
+              label: 'Close',
+              action: function(dialogRef) {
+                dialogRef.close();
+              },
+            },
+          ],
+        });
+        
+      });
+      
 
 
-      $('.delete-btn').on('click', function () {
+      $('.delete-btn').on('click', function() {
         console.log($(this).data('id'));
         var id = $(this).data('id');
         BootstrapDialog.closeAll();
 
-
         BootstrapDialog.show({
           message: '確定刪除?',
           type: 'type-danger',
-          buttons: [{
-            label: '確定',
-            cssClass: 'btn-danger',
-            action: function (dialogRef) {
-              dialogRef.close();
-              $.ajax({
-                method: 'DELETE',
-                // 刪除id為2的資料
-                url: self._ajaxUrls.accountApi + '/' + id,
-                dataType: 'json',
-              }).done(function (data) {
-
-                BootstrapDialog.show({
-                  message: '刪除成功!',
-                  type: 'type-success',
-                  buttons: [{
-                    label: 'OK',
-                    action: function (dialogRef) {
-                      dialogRef.close();
-
-
-                    }
-                  }]
-                });
-                _initialize();
-              }).fail(function (jqXHR) {
-                // 錯誤處理
-
-                console.log(jqXHR);
-              });
-
-
-
-            }
-          }, {
-            label: 'Close',
-            action: function (dialogRef) {
-              dialogRef.close();
-            }
-          }]
+          buttons: [
+            {
+              label: '確定',
+              cssClass: 'btn-danger',
+              action: function(dialogRef) {
+                dialogRef.close();
+                $.ajax({
+                  method: 'DELETE',
+                  // 刪除id為2的資料
+                  url: self._ajaxUrls.accountApi + '/' + id,
+                  dataType: 'json',
+                })
+                  .done(function(data) {
+                    
+                    $.rustaMsgBox({ 'mode' : 'success' ,'content':'刪除成功!'});
+                 
+                    _initialize();
+                  })
+                  .fail(function(jqXHR) {
+                    // 錯誤處理
+                    $.rustaMsgBox({ 'mode' : 'warning','content':'刪除失敗!'+jqXHR.responseTex });
+                    console.log(jqXHR);
+                  });
+              },
+            },
+            {
+              label: 'Close',
+              action: function(dialogRef) {
+                dialogRef.close();
+              },
+            },
+          ],
         });
 
         /**
         * 刪除一筆
         */
-
-
-
       });
-     
 
-
-      $('.edit-btn').on('click', function () {
+      $('.edit-btn').on('click', function() {
         console.log($(this).data('id'));
         var id = $(this).data('id');
         BootstrapDialog.closeAll();
@@ -313,244 +350,192 @@
           // 讀取id為**的資料
           url: self._ajaxUrls.accountApi + '/' + id,
           dataType: 'json',
-        }).done(function (data) {
+        }).done(function(data) {
           console.log(data);
-          var datePicker = new Date().toISOString().split("T")[0];
+          var datePicker = new Date().toISOString().split('T')[0];
           // 處理回傳資料
           var $editForm = $('<div></div>');
           if (data.data[0].gender == 0) {
-            $editForm.append('<form class="form" name="editForm" ><div class="row m-0"><div class="form-group col-4 col-md-4"><label for="account">帳號</label><input type="text" pattern="/[A-Za-z0-9]+/" maxlength=15 minlength=5 required class="form-control" id="account" name="account" value="' + data.data[0].account + '"></div><div class="form-group col-4 col-md-4"><label for="name">姓名</label><input type="text" minlength="1" maxlength="30" required class="form-control" id="name" name="name" value="' + data.data[0].name + '"></div><div class="form-group col-4 col-md-4"><label for="gender">性別</label><select class="form-control" id="gender" name="gender" required ><option value="0" selected>男</option><option value="1">女</option></select></div></div><div class="row m-0"><div class="form-group col-4 col-md-4"><label for="birth">生日</label><input type="date" required class="form-control" id="birth" name="birth" max="' + datePicker + '" value="' + data.data[0].birth + '"></div><div class="form-group col-4 col-md-4"><label for="email">Email</label><input type="email" required class="form-control" id="email" name="email" value="' + data.data[0].email + '"></div><div class="form-group col-4 col-md-4"><label for="note">Note</label><input type="text" class="form-control" id="note" name="note"  value="' + data.data[0].note + '"></div></div></form>');
-
+            $editForm.append(
+              '<form class="form" id="editForm" name="editForm" ><div class="row m-0"><div class="form-group col-4 col-md-4"><label for="account">帳號</label><input  type="text" pattern="[A-Za-z0-9]+" maxlength=15 minlength=5 required class="form-control" id="account" name="account" value="' +
+                data.data[0].account +
+                '"></div><div class="form-group col-4 col-md-4"><label for="name">姓名</label><input type="text" minlength="1" maxlength="30" required class="form-control" id="name" name="name" value="' +
+                data.data[0].name +
+                '"></div><div class="form-group col-4 col-md-4"><label for="gender">性別</label><select class="form-control" id="gender" name="gender" required ><option value="0" selected>男</option><option value="1">女</option></select></div></div><div class="row m-0"><div class="form-group col-4 col-md-4"><label for="birth">生日</label><input type="date" required class="form-control" id="birth" name="birth" max="' +
+                datePicker +
+                '" value="' +
+                data.data[0].birth +
+                '"></div><div class="form-group col-4 col-md-4"><label for="email">Email</label><input type="email" required class="form-control" id="email" name="email" value="' +
+                data.data[0].email +
+                '"></div><div class="form-group col-4 col-md-4"><label for="note">Note</label><input type="text" class="form-control" id="note" name="note"  value="' +
+                data.data[0].note +
+                '"></div></div></form>'
+            );
           } else {
-            $editForm.append('<form class="form" name="editForm" ><div class="row m-0"><div class="form-group col-4 col-md-4"><label for="account">帳號</label><input type="text" pattern="/[A-Za-z0-9]+/" maxlength=15 minlength=5 required class="form-control" id="account" name="account" value="' + data.data[0].account + '"></div><div class="form-group col-4 col-md-4"><label for="name">姓名</label><input type="text" minlength="1" maxlength="30" required class="form-control" id="name" name="name" value="' + data.data[0].name + '"></div><div class="form-group col-4 col-md-4"><label for="gender">性別</label><select class="form-control" id="gender" name="gender" required ><option value="0" >男</option><option value="1" selected>女</option></select></div></div><div class="row m-0"><div class="form-group col-4 col-md-4"><label for="birth">生日</label><input type="date" required class="form-control" id="birth" name="birth" max="' + datePicker + '" value="' + data.data[0].birth + '"></div><div class="form-group col-4 col-md-4"><label for="email">Email</label><input type="email" required class="form-control" id="email" name="email" value="' + data.data[0].email + '"></div><div class="form-group col-4 col-md-4"><label for="note">Note</label><input type="text" class="form-control" id="note" name="note" value="' + data.data[0].note + '"></div></div></form>');
+            $editForm.append(
+              '<form class="form" id="editForm" name="editForm" ><div class="row m-0"><div class="form-group col-4 col-md-4"><label for="account">帳號</label><input  type="text" pattern="[A-Za-z0-9]+" maxlength=15 minlength=5 required class="form-control" id="account" name="account" value="' +
+                data.data[0].account +
+                '"></div><div class="form-group col-4 col-md-4"><label for="name">姓名</label><input type="text" minlength="1" maxlength="30" required class="form-control" id="name" name="name" value="' +
+                data.data[0].name +
+                '"></div><div class="form-group col-4 col-md-4"><label for="gender">性別</label><select class="form-control" id="gender" name="gender" required ><option value="0" >男</option><option value="1" selected>女</option></select></div></div><div class="row m-0"><div class="form-group col-4 col-md-4"><label for="birth">生日</label><input type="date" required class="form-control" id="birth" name="birth" max="' +
+                datePicker +
+                '" value="' +
+                data.data[0].birth +
+                '"></div><div class="form-group col-4 col-md-4"><label for="email">Email</label><input type="email" required class="form-control" id="email" name="email" value="' +
+                data.data[0].email +
+                '"></div><div class="form-group col-4 col-md-4"><label for="note">Note</label><input type="text" class="form-control" id="note" name="note" value="' +
+                data.data[0].note +
+                '"></div></div></form>'
+            );
           }
           var dialog = new BootstrapDialog({
             title: '修改',
             message: $editForm,
-            buttons: [{
-              icon: 'glyphicon glyphicon-send',
-              label: '送出',
-              cssClass: 'btn-primary',
+            buttons: [
+              {
+                icon: 'glyphicon glyphicon-send',
+                label: '送出',
+                cssClass: 'btn-primary',
 
-              action: function (dialogRef) {
-                dialogRef.enableButtons(false);
-                dialogRef.setClosable(false);
-                var formData = $("[name='editForm']").serializeArray();
-                console.log(formData);
-                $.ajax({
-                  // 傳送方法
-                  method: 'PUT',
-                  // 目標網址
-                  url: self._ajaxUrls.accountApi + '/' + id,
-                  // 傳送資料
-                  data: formData,
-                  // 回傳資料格式
-                  dataType: 'json',
-                })
-                  .done(function (data) {
-                    // 輸出至console
-                    console.log(data);
-                    dialogRef.close();
+                action: function(dialogRef) {
+                  var isFormPassing = document.forms['editForm'].checkValidity();
+                  console.log(isFormPassing);
+                  if (!isFormPassing) {
+                      document.querySelector('#editForm').reportValidity();
+                      return;
+                  } else {
+                
+                  dialogRef.enableButtons(false);
+                  dialogRef.setClosable(false);
+                  
+                  var formData = $("[name='editForm']").serializeArray();
+                  console.log('傳送修改');
+                  console.log(formData);
+                  $.ajax({
+                    // 傳送方法
+                    method: 'PUT',
+                    // 目標網址
+                    url: self._ajaxUrls.accountApi + '/' + id,
+                    // 傳送資料
+                    data: formData,
+                    // 回傳資料格式
+                    dataType: 'json',
+                    })
+                    .done(function(data) {
+                      // 輸出至console
+                      console.log(data);
+                      dialogRef.close();
 
+                      $.rustaMsgBox({ 'mode' : 'success' ,'content':'修改成功!'});
 
-                    BootstrapDialog.show({
-                      message: '修改成功!',
-                      type: 'type-success',
-                      buttons: [{
-                        label: 'OK',
-                        action: function (dialogRef) {
-                          dialogRef.close();
+                      _initialize();
+                    })
+                    .fail(function(jqXHR) {
+                      // 處理回傳資料
+                      $.rustaMsgBox({ 'mode' : 'warning' ,'content':jqXHR.responseText});
+                     
+                    
+                      dialogRef.enableButtons(true);
+                      dialogRef.setClosable(true);
 
-
-                        }
-                      }]
+                      console.log(jqXHR);
                     });
-
-                    _initialize();
-                  })
-                  .fail(function (jqXHR) {
-                    // 處理回傳資料
-
-                    BootstrapDialog.show({
-                      message: '修改失敗!' + jqXHR.responseText,
-                      type: 'type-warning',
-                      buttons: [{
-                        label: 'OK',
-                        action: function (dialogRef) {
-                          dialogRef.close();
-                        }
-                      }]
-                    });
-                    console.log(dialogRef);
-                    dialogRef.enableButtons(true);
-                    dialogRef.setClosable(true);
-
-                    console.log(jqXHR);
-                  });
-              }
-            }, {
-              label: 'Close',
-              action: function (dialogRef) {
-                dialogRef.close();
-
-              }
-            }]
+                  }},
+              },
+              {
+                label: 'Close',
+                action: function(dialogRef) {
+                  dialogRef.close();
+                },
+              },
+            ],
           });
           dialog.open();
         });
       });
-      
-      
-     
+
       /**
              * 打開新增的談窗appendTo
              */
-     
 
-
-      $('.add-btn').on('click', function () {
-        
-        var datePicker = new Date().toISOString().split("T")[0];
+      $('.add-btn').on('click', function() {
+        var datePicker = new Date().toISOString().split('T')[0];
         var $addForm = $('<div></div>');
-        $addForm.append('<form  id="addForm" class="form"  name="addForm" ><div class="row m-0"><div class="form-group col-4 col-md-4"><label for="account">帳號</label><input type="text" pattern="[a-zA-Z0-9]+" maxlength=15 minlength=5 required class="form-control" id="account" name="account"></div><div class="form-group col-4 col-md-4"><label for="name">姓名</label><input type="text" minlength="1" maxlength="30" required class="form-control" id="name" name="name"></div><div class="form-group col-4 col-md-4"><label for="gender">性別</label><select class="form-control" id="gender" name="gender" required><option value="0">男</option><option value="1">女</option></select></div></div><div class="row m-0"><div class="form-group col-4 col-md-4"><label for="birth">生日</label><input type="date" max="' + datePicker + '" required class="form-control" id="birth" name="birth"></div><div class="form-group col-4 col-md-4"><label for="email">Email</label><input type="email" required class="form-control" id="email" name="email"></div><div class="form-group col-4 col-md-4"><label for="note">Note</label><input type="text" class="form-control" id="note" name="note"></div></div></form>');
+        $addForm.append(
+          '<form  id="addForm" class="form"  name="addForm" ><div class="row m-0"><div class="form-group col-4 col-md-4"><label for="account">帳號</label><input type="text" pattern="[a-zA-Z0-9]+" maxlength=15 minlength=5 required class="form-control" id="account" name="account"></div><div class="form-group col-4 col-md-4"><label for="name">姓名</label><input type="text" minlength="1" maxlength="30" required class="form-control" id="name" name="name"></div><div class="form-group col-4 col-md-4"><label for="gender">性別</label><select class="form-control" id="gender" name="gender" required><option value="0">男</option><option value="1">女</option></select></div></div><div class="row m-0"><div class="form-group col-4 col-md-4"><label for="birth">生日</label><input type="date" max="' +
+            datePicker +
+            '" required class="form-control" id="birth" name="birth"></div><div class="form-group col-4 col-md-4"><label for="email">Email</label><input type="email" required class="form-control" id="email" name="email"></div><div class="form-group col-4 col-md-4"><label for="note">Note</label><input type="text" class="form-control" id="note" name="note"></div></div></form>'
+        );
 
         BootstrapDialog.closeAll();
-        console.log('2022-12-2'.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))
+
         var dialog = new BootstrapDialog({
           title: '新增',
           message: $addForm,
           cssClass: 'add-modal',
-          buttons: [{
-            icon: 'glyphicon glyphicon-send',
-            label: '送出',
-            cssClass: 'btn-primary add-submit',
-            
-            action: function (dialogRef) {
-              $('.add-submit').attr('type', 'submit');
-              $('.add-submit').attr('form', 'addForm');
-              $("#addForm").submit(function(event){
-                event.preventDefault()
-                var formData = $("[name='addForm']").serializeArray();
+          buttons: [
+            {
+              icon: 'glyphicon glyphicon-send',
+              label: '送出',
+              cssClass: 'btn-primary add-submit',
+
+              action: function(dialogRef) {
                 
-                var account = document.forms["addForm"]["account"].value;
-                var name = document.forms["addForm"]["name"].value;
-                
-                var birth = document.forms["addForm"]["birth"].value;
-                
-                var email = document.forms["addForm"]["email"].value;
-                
-                if (account==='' || account == null || !(account.match(/[a-zA-Z0-9]{5,15}/))) {
-                  console.log('account');
-                  return 
+                var isFormPassing = document.forms['addForm'].checkValidity();
+                console.log(isFormPassing);
+                if (!isFormPassing) {
+                  document.querySelector('#addForm').reportValidity();
+                  return;
+                } else {
+                  var formData = $("[name='addForm']").serializeArray();
+
+
+                  //e.preventDefault();//防止跳轉
+                  dialogRef.enableButtons(false);
+                  dialogRef.setClosable(false);
+
+                  $.ajax({
+                    // 傳送方法
+                    method: 'POST',
+                    // 目標網址
+                    url: self._ajaxUrls.accountApi,
+                    // 傳送資料
+                    data: formData,
+                    // 回傳資料格式
+                    dataType: 'json',
+                  })
+                    .done(function(data) {
+                      // 輸出至console
+                      console.log(data);
+                      dialogRef.close();
+
+                      $.rustaMsgBox({ 'mode' : 'success','content':'新增成功!' });
+
+                      _initialize();
+                    })
+                    .fail(function(jqXHR) {
+                      // 處理回傳資料
+                      console.log(jqXHR.responseText);
+                      $.rustaMsgBox({ 'mode' : 'warning' ,'content':jqXHR.responseText});
+                      console.log(dialogRef);
+                      dialogRef.enableButtons(true);
+                      dialogRef.setClosable(true);
+
+                      console.log(jqXHR);
+                    });
                 }
-                if (name==='' || name == null || !(name.match(/.{2,30}/))){
-                  console.log('name')
-                  return 
-                }
-                if (birth==='' || birth==='0000-00-00' || birth == null || !(birth.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))){
-                  console.log('birth')
-                  return 
-                }
-                var atpos=email.indexOf("@");
-                var dotpos=email.lastIndexOf(".");
-                if (email==='' || email == null || atpos<1 || dotpos<atpos+2 || dotpos+2>=email.length){
-                  console.log('birth')
-                  return ;
-                }
-                
-                
-                console.log(formData);
-             
-                 console.log('aaa');
-              
-              
-                console.log('befor');
-                //e.preventDefault();//防止跳轉
-              
-             
-
-
-              
-
-              console.log('sss');
-              // dialogRef.enableButtons(false);
-              // dialogRef.setClosable(false);
-              dialogRef.enableButtons(false);
-              dialogRef.setClosable(false);
-
-
-
-
-              
-              // $.ajax({
-              //   // 傳送方法
-              //   method: 'POST',
-              //   // 目標網址
-              //   url: self._ajaxUrls.accountApi,
-              //   // 傳送資料
-              //   data: formData,
-              //   // 回傳資料格式
-              //   dataType: 'json',
-              // })
-              //   .done(function (data) {
-              //     // 輸出至console
-              //     console.log(data);
-              //     dialogRef.close();
-
-
-              //     BootstrapDialog.show({
-              //       message: '新增成功!',
-              //       type: 'type-success',
-              //       buttons: [{
-              //         label: 'OK',
-              //         action: function (dialogRef,) {
-
-              //           dialogRef.close();
-
-
-              //         }
-              //       }]
-              //     });
-
-              //     _initialize();
-              //   })
-              //   .fail(function (jqXHR) {
-              //     // 處理回傳資料
-              //     console.log(jqXHR.responseText);
-              //     BootstrapDialog.show({
-              //       message: '新增失敗!' + jqXHR.responseText,
-              //       type: 'type-warning',
-              //       buttons: [{
-              //         label: 'OK',
-              //         action: function (dialogRef) {
-              //           dialogRef.close();
-              //         }
-              //       }]
-              //     });
-              //     console.log(dialogRef);
-              //     dialogRef.enableButtons(true);
-              //     dialogRef.setClosable(true);
-
-              //     console.log(jqXHR);
-              //   });
-
-            }); }
-          },
-          {
-            label: 'Close',
-            action: function (dialogRef) {
-              dialogRef.close();
-            }
-          }]
+              },
+            },
+            {
+              label: 'Close',
+              action: function(dialogRef) {
+                dialogRef.close();
+              },
+            },
+          ],
         });
         dialog.open();
-        
-
-
-
       });
-
-
 
       /**
               * 事件 - 增加
@@ -572,21 +557,21 @@
     /**
           * 事件 - 送出
           */
-    var _submit = function (e) {
+    var _submit = function(e) {
       return this;
     };
 
     /**
           * 事件 - 清除
           */
-    var _clear = function (e) {
+    var _clear = function(e) {
       return this;
     };
 
     /**
           * 事件 - 增加
           */
-    var _add = function (e) {
+    var _add = function(e) {
       return this;
     };
 
