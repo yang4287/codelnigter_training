@@ -1595,5 +1595,17 @@ class CI_Form_validation {
 		$this->error_string = '';
 		return $this;
 	}
-
+	public function valid_date($date)
+    {
+        
+        $today = date('Y-m-d');
+        $d = DateTime::createFromFormat('Y-m-d', $date);
+		// 驗證日期是否為合理日期，以及小於等於今天日期
+        if (!($d && $d->format('Y-m-d') === $date && strtotime($d->format('Y-m-d')) <= strtotime($today))) {
+            $this->set_message('valid_date', 'The {field} field can not be the valid date');
+            return false;
+        } else {
+            return true;
+        };
+    }
 }
